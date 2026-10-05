@@ -1,0 +1,86 @@
+{
+  "Group 1: Canonical Taxonomy": {
+    "pass": true,
+    "details": "31/31 skills tested. Failures: []"
+  },
+  "Group 2: Alias Exhaustiveness": {
+    "pass": true,
+    "details": "79 aliases tested. Failures: []"
+  },
+  "Group 3: False Positives (Subtokens)": {
+    "pass": true,
+    "details": "Failures: []"
+  },
+  "Group 4 & 5 / B-01: Symbol Boundaries & C Handling": {
+    "pass": false,
+    "details": "Failures: [\"Expected 'C' in 'Experience as C-developer on Linux.' -> got ['Linux']\"]"
+  },
+  "Group 6 / B-02: Go Language Disambiguation": {
+    "pass": false,
+    "details": "Failures: [\"Failed to extract 'Go' from tech text: 'Proficient in GO language.' -> []\"]"
+  },
+  "Group 6 / B-03: Node.js vs Cluster Node": {
+    "pass": true,
+    "details": "Failures: []"
+  },
+  "Group 7: False Negatives": {
+    "pass": true,
+    "details": "Failures: []"
+  },
+  "Group 8: Context / Evidence Integrity": {
+    "pass": true,
+    "details": "Details: []"
+  },
+  "Group 9: Deduplication": {
+    "pass": true,
+    "details": "Count: 1, Skill: Java, Conf: 1.0"
+  },
+  "Group 10: Determinism": {
+    "pass": true,
+    "details": "100 runs, 24 skills extracted per run, 0 divergences, total time 5.40s"
+  },
+  "Group 11: Idempotency": {
+    "pass": true,
+    "details": "Re-extracted 5 times, skill count maintained at 3"
+  },
+  "Group 12 / B-07: Concurrency Serialization": {
+    "pass": true,
+    "details": "Levels 5/10/20: {5: (5, 0, 0.14206814765930176, []), 10: (10, 0, 0.2604560852050781, []), 20: (20, 0, 0.47814273834228516, [])}"
+  },
+  "Group 13: Cross-Format Parity": {
+    "pass": true,
+    "details": "TXT: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'PostgreSQL', 'Python'], DOCX: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'PostgreSQL', 'Python'], PDF: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'PostgreSQL', 'Python']"
+  },
+  "Group 14 & 15 / B-06: Blank Content Rejection": {
+    "pass": false,
+    "details": "Details: [\"empty.txt: expected error containing 'Upload rejected: File is empty or not provided.', got '{'error': 'File parameter is required and cannot be empty.'}'\", \"spaces.txt: expected error containing 'Upload rejected: File contains only whitespace or is empty.', got '{'error': 'Upload validation failed', 'detail': 'Upload rejected: Corrupt file (payload smaller than 4 bytes).'}'\", \"tabs.txt: expected error containing 'Upload rejected: File contains only whitespace or is empty.', got '{'error': 'Upload validation failed', 'detail': 'Upload rejected: Corrupt file (payload smaller than 4 bytes).'}'\"]"
+  },
+  "Group 16 / B-05: API Contract & Security Auditing": {
+    "pass": true,
+    "details": "404: True, 200 []: True, 400 bad id: True, No leak: True"
+  },
+  "Group 17: Database Integrity": {
+    "pass": true,
+    "details": "UQ: True, FK Resume: True, FK Skill: True"
+  },
+  "Group 18 / B-08: Transaction Rollback Status Updater": {
+    "pass": true,
+    "details": "SkillExtractionIntegrationTest#testSkillExtractionFailureStatusPersisted PASSED"
+  },
+  "Group 19 / B-04: Migration History & V3 Checksum": {
+    "pass": true,
+    "details": "V3 Checksum: 11453495 (expected 11453495), All Success: True"
+  },
+  "Group 20: Security Ingestion Rejections": {
+    "pass": false,
+    "details": "Failures: [\"resume;rm -rf /;.pdf: expected 'command characters', got '{'error': 'Upload validation failed', 'detail': 'Security violation: Filename contains path traversal or illegal characters: resume;rm -rf /;.pdf'}'\"]"
+  },
+  "Group 21: Performance Profile": {
+    "pass": true,
+    "details": "Profiles: {'1 KB': {'status': 201, 'latency_ms': 54.63, 'skillsCount': 7}, '10 KB': {'status': 201, 'latency_ms': 126.39, 'skillsCount': 7}, '50 KB': {'status': 201, 'latency_ms': 422.43, 'skillsCount': 7}, '100 KB': {'status': 201, 'latency_ms': 998.5, 'skillsCount': 7}, '500 KB': {'status': 201, 'latency_ms': 8276.62, 'skillsCount': 7}, '1000 KB': {'status': 201, 'latency_ms': 22305.5, 'skillsCount': 7}, '5 MB': {'status': 201, 'latency_ms': 321321.53}}"
+  },
+  "Group 22: Full Regression & Cross-Service Connectivity": {
+    "pass": true,
+    "details": "Backend, PostgreSQL, and AI Service UP: {'database': {'database': 'PostgreSQL', 'version': '16.13', 'status': 'UP'}, 'service': 'fairhire-backend', 'ai_service': {'details': {'status': 'UP', 'service': 'fairhire-ai-service', 'version': '1.0.0', 'timestamp': '2026-10-05T10:09:28.507579+00:00', 'runtime': {'python_version': '3.11.17', 'model_configured': 'all-MiniLM-L6-v2'}}, 'status': 'UP'}, 'timestamp': '2026-10-05T10:09:27.878776553Z', 'status': 'UP'}"
+  }
+}
