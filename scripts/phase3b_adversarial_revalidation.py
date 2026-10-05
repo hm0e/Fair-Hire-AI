@@ -17,8 +17,22 @@ import zipfile
 import io
 import re
 
-BASE_URL = "http://127.0.0.1:8088/api/v1"
-AI_URL = "http://127.0.0.1:5000"
+def get_ip(container_name, default_ip):
+    try:
+        cmd = ["docker", "inspect", container_name, "--format", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"]
+        p = subprocess.run(cmd, capture_output=True, text=True)
+        ip = p.stdout.strip().replace("'", "").replace('"', "")
+        if ip and re.match(r"^\d+\.\d+\.\d+\.\d+$", ip):
+            return ip
+    except Exception as e:
+        print(f"Error inspecting {container_name}: {e}")
+    return default_ip
+
+BACKEND_IP = get_ip("fairhire-backend", "172.19.0.5")
+AI_IP = get_ip("fairhire-ai-service", "172.19.0.3")
+print(f"Targeting BACKEND_IP: {BACKEND_IP}, AI_IP: {AI_IP}")
+BASE_URL = f"http://{BACKEND_IP}:8088/api/v1"
+AI_URL = f"http://{AI_IP}:5000"
 
 def log(msg):
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
@@ -155,9 +169,10 @@ def create_valid_docx_bytes(text):
         zf.writestr("word/document.xml", doc_xml)
     return buf.getvalue()
 
-def ingest_text(text, name="Test Candidate", email="test@example.com"):
+def ingest_text(text, name="Test Candidate", email="test@example.com", ensure_unique=True):
+    actual_text = f"{text}\n# ref: {time.time()}_{os.urandom(4).hex()}" if ensure_unique else text
     status, data = http_json("POST", "/resumes", {
-        "raw_text": text,
+        "raw_text": actual_text,
         "name": name,
         "email": email
     })
@@ -167,9 +182,16 @@ def main():
     log("=== Starting FairHire AI Phase 3B Adversarial Revalidation Suite ===")
     results = {}
     
-    # Check Health
-    status, health = http_json("GET", "/health", expected_status=200)
-    assert health.get("status") == "UP"
+    # Wait for backend to be healthy
+    health = None
+    for attempt in range(30):
+        try:
+            status, health = http_json("GET", "/health", expected_status=200)
+            if health.get("status") == "UP":
+                break
+        except Exception:
+            time.sleep(2)
+    assert health and health.get("status") == "UP", "Backend failed to become healthy within 60s"
     log("Backend is UP and healthy.")
     
     # Fetch all active skills
@@ -415,7 +437,7 @@ def main():
     for sk in skills:
         matched = sk.get("matchedText")
         snippet = sk.get("contextSnippet")
-        conf = sk.get("confidence")
+        conf = sk.get("extractionConfidence", sk.get("confidence"))
         if matched not in g8_text:
             g8_pass = False
             g8_details.append(f"Matched text '{matched}' not found in source")
@@ -438,8 +460,10 @@ def main():
     u_email = f"g9_{hashlib.md5(g9_text.encode()).hexdigest()[:8]}@example.com"
     s, resp = ingest_text(g9_text, "G9 Dedup", u_email)
     skills = resp.get("extractedSkills", [])
-    g9_pass = len(skills) == 1 and skills[0]["skillName"] == "Java" and float(skills[0]["confidence"]) == 1.0
-    results["Group 9: Deduplication"] = (g9_pass, f"Count: {len(skills)}, Skill: {skills[0]['skillName'] if skills else None}, Conf: {skills[0]['confidence'] if skills else None}")
+    conf_val = float(skills[0].get("extractionConfidence", skills[0].get("confidence", 0))) if skills else 0.0
+    g9_pass = len(skills) == 1 and skills[0]["skillName"] == "Java" and conf_val == 1.0
+    conf_display = skills[0].get("extractionConfidence", skills[0].get("confidence")) if skills else None
+    results["Group 9: Deduplication"] = (g9_pass, f"Count: {len(skills)}, Skill: {skills[0]['skillName'] if skills else None}, Conf: {conf_display}")
 
     # -------------------------------------------------------------
     # 10. DETERMINISM (Group 10 - 100 runs)
@@ -459,15 +483,33 @@ Experience:
 - Built reactive frontends with React and TypeScript.
 - Developed low-latency core services in Go and C++.
 """
+    # Ingest once or reuse existing resume if already ingested
+    u_email = f"g10_{time.time()}@example.com"
+    s, resp = ingest_text(complex_resume, "G10 Determinism Candidate", u_email)
+    if s == 201:
+        complex_resume_id = resp["resumeId"]
+    elif s == 409 and "existingResumeId" in resp:
+        complex_resume_id = resp["existingResumeId"]
+    else:
+        raise AssertionError(f"Could not ingest or find resume: {resp}")
+
     first_skills_summary = None
     divergences = 0
     t0 = time.time()
     for run_i in range(100):
-        u_email = f"g10_run{run_i}_{hashlib.md5(complex_resume.encode()).hexdigest()[:8]}@example.com"
-        s, resp = ingest_text(complex_resume, f"G10 Candidate {run_i}", u_email)
-        assert s == 201
-        skills = resp.get("extractedSkills", [])
-        summary = [(sk["skillName"], sk["matchedText"], sk["extractionMethod"], str(sk["confidence"]), sk["contextSnippet"]) for sk in skills]
+        s_ext, resp_ext = http_json("POST", f"/resumes/{complex_resume_id}/skills/extract", expected_status=200)
+        skills = resp_ext.get("skills", [])
+        summary = [
+            (
+                sk.get("skillId"),
+                sk.get("skillName"),
+                sk.get("matchedText"),
+                sk.get("extractionMethod"),
+                str(sk.get("extractionConfidence", "")),
+                sk.get("contextSnippet")
+            )
+            for sk in skills
+        ]
         if first_skills_summary is None:
             first_skills_summary = summary
         else:
@@ -611,8 +653,7 @@ Experience:
     # 17. DATABASE INTEGRITY (Group 17)
     # -------------------------------------------------------------
     log("Running Group 17: Database Schema & Integrity Constraints...")
-    # We query PostgreSQL inside WSL directly
-    cmd = 'wsl -d Ubuntu-24.04 docker exec fairhire-postgres psql -U postgres -d fairhire_db -c "SELECT conname, contype FROM pg_constraint WHERE conrelid = \'resume_skills\'::regclass;"'
+    cmd = 'docker exec fairhire-postgres psql -U postgres -d fairhire_db -c "SELECT conname, contype FROM pg_constraint WHERE conrelid = \'resume_skills\'::regclass;"'
     p = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     out = p.stdout
     uq_present = "uq_resume_skills_resume_skill" in out
@@ -625,10 +666,8 @@ Experience:
     # 18. TRANSACTION ROLLBACK (Group 18 / B-08)
     # -------------------------------------------------------------
     log("Running Group 18 / B-08: Transaction Rollback & Failure Status Persistence...")
-    # B-08 is verified in the automated integration test SkillExtractionIntegrationTest.testSkillExtractionFailureStatusPersisted
-    # Let's run maven test specifically for B-08 to verify transaction isolation
-    cmd_b08 = 'wsl -d Ubuntu-24.04 bash -c "cd /mnt/c/Users/harhm/Downloads/FairHire_AI_Application/fairhire_ai/backend && ./mvnw test -Dtest=SkillExtractionIntegrationTest#testSkillExtractionFailureStatusPersisted"'
-    p_b08 = subprocess.run(cmd_b08, shell=True, capture_output=True, text=True)
+    cmd_b08 = 'mvn test -Dtest=SkillExtractionIntegrationTest#testSkillExtractionFailureStatusPersisted'
+    p_b08 = subprocess.run(cmd_b08, cwd="/mnt/c/Users/harhm/Downloads/FairHire_AI_Application/fairhire_ai/backend", shell=True, capture_output=True, text=True)
     b08_pass = "BUILD SUCCESS" in p_b08.stdout and "Failures: 0, Errors: 0" in p_b08.stdout
     results["Group 18 / B-08: Transaction Rollback Status Updater"] = (b08_pass, "SkillExtractionIntegrationTest#testSkillExtractionFailureStatusPersisted PASSED")
 
@@ -636,7 +675,7 @@ Experience:
     # 19. MIGRATION & SCHEMA INTEGRITY (Group 19 / B-04)
     # -------------------------------------------------------------
     log("Running Group 19 / B-04: Migration Integrity & V3 Checksum...")
-    cmd_flyway = 'wsl -d Ubuntu-24.04 docker exec fairhire-postgres psql -U postgres -d fairhire_db -t -A -c "SELECT version, checksum, success FROM flyway_schema_history ORDER BY installed_rank;"'
+    cmd_flyway = 'docker exec fairhire-postgres psql -U postgres -d fairhire_db -t -A -c "SELECT version, checksum, success FROM flyway_schema_history ORDER BY installed_rank;"'
     p_fly = subprocess.run(cmd_flyway, shell=True, capture_output=True, text=True)
     fly_lines = [line.strip().split("|") for line in p_fly.stdout.strip().split("\n") if line.strip()]
     
