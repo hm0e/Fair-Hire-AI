@@ -1,0 +1,16 @@
+Rahul Verma
+Email: rahul.verma@example.com | Phone: 9998887777
+Gender: Male
+
+Summary:
+Full-stack developer with 3 years experience, strong in Java and cloud technologies.
+
+Skills: Java, Spring Boot, SQL, AWS, Docker, Kubernetes, Git
+
+Experience:
+Software Engineer, CloudBridge Technologies (2022-Present)
+- Designed microservices using Spring Boot deployed on AWS.
+- Led a small team of 2 juniors on a cloud migration project.
+
+Education:
+B.Tech Computer Engineering, Mumbai University, 2022

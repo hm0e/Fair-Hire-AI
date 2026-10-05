@@ -1,0 +1,16 @@
+Sneha Kulkarni
+Email: sneha.kulkarni@example.com | Phone: 9123456780
+Gender: Female
+
+Summary:
+Data-focused software developer with 1.5 years of experience in Python, Django and analytics.
+
+Skills: Python, Django, SQL, Pandas, NumPy, Seaborn, REST API, Excel
+
+Experience:
+Junior Developer, DataCraft Analytics (2024-Present)
+- Built internal dashboards using Django and Pandas.
+- Automated reporting workflows saving 5 hours per week.
+
+Education:
+B.Sc Computer Science, Pune University, 2023

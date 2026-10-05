@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install curl for health check
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install FastAPI service dependencies for Phase 1
+RUN pip install --no-cache-dir \
+    "fastapi>=0.110.0" \
+    "uvicorn[standard]>=0.28.0" \
+    "pydantic>=2.6.0" \
+    "httpx>=0.27.0" \
+    "pytest>=8.0.0"
+
+# Copy application source
+COPY ai-service/app/ /app/app/
+COPY ai-service/data/ /app/data/
+
+ENV PYTHONUNBUFFERED=1
+ENV AI_SERVICE_HOST=0.0.0.0
+ENV AI_SERVICE_PORT=5000
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/api/v1/health || exit 1
+
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]

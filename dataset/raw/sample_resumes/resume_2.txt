@@ -1,0 +1,16 @@
+Priya Deshmukh
+Email: priya.deshmukh@example.com | Phone: 9876500000
+Gender: Female
+
+Summary:
+Aspiring backend developer with strong fundamentals in Python and databases, 1 year of internship experience.
+
+Skills: Python, Flask, SQL, SQLite, Git, Pandas, NumPy
+
+Experience:
+Backend Intern, CodeWorks Solutions (2025)
+- Developed REST API endpoints using Flask and SQLite.
+- Wrote unit tests and used Git for version control.
+
+Education:
+B.Sc Computer Science, Pune University, 2024

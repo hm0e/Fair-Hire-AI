@@ -1,0 +1,48 @@
+# Root .gitignore for FairHire AI
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+
+# Build outputs
+dist/
+build/
+target/
+*.class
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & local data
+*.db
+*.sqlite3
+backend/database/fairhire.db
+backend-spring/data/
+fairhire_db.*
+
+# User uploads (keep directory with .gitkeep)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+*.swp
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+.legacy_backup/
+

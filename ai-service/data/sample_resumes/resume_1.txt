@@ -1,0 +1,16 @@
+Aarav Sharma
+Email: aarav.sharma@example.com | Phone: 9876543210
+Gender: Male
+
+Summary:
+Backend developer with 2 years of experience building REST APIs using Python and Django.
+
+Skills: Python, Django, REST API, SQL, MySQL, Git, Linux, Docker
+
+Experience:
+Software Developer, TechNova Pvt Ltd (2024-Present)
+- Built and maintained REST APIs using Django and MySQL.
+- Collaborated with frontend team using React.
+
+Education:
+B.Sc Computer Science, Pune University, 2023
