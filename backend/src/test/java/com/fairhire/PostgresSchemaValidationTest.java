@@ -48,11 +48,11 @@ class PostgresSchemaValidationTest {
         assertNotNull(flywayCount);
         assertTrue(flywayCount >= 1, "Flyway migrations must be successfully recorded");
 
-        // 2. Verify all 19 canonical tables exist in PostgreSQL 16
+        // 2. Verify all 20 canonical tables exist in PostgreSQL 16
         List<String> expectedTables = List.of(
                 "users", "jobs", "job_requirements", "candidates", "resumes",
                 "skills", "job_skills", "resume_skills", "blind_screening_results",
-                "bias_reports", "rewrite_suggestions", "match_results", "audit_logs",
+                "bias_reports", "rewrite_suggestions", "match_results", "match_skill_details", "audit_logs",
                 "dataset_versions", "dataset_records", "annotations",
                 "experiment_runs", "experiment_results", "experiment_metrics"
         );

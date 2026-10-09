@@ -7,6 +7,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "match_results", uniqueConstraints = {
@@ -73,6 +75,44 @@ public class MatchResult {
     @Column(name = "model_version", nullable = false, length = 100)
     private String modelVersion = "all-MiniLM-L6-v2";
 
+    @Column(name = "required_skill_coverage", precision = 5, scale = 4)
+    private BigDecimal requiredSkillCoverage;
+
+    @Column(name = "preferred_skill_coverage", precision = 5, scale = 4)
+    private BigDecimal preferredSkillCoverage;
+
+    @Column(name = "overall_score", precision = 5, scale = 2)
+    private BigDecimal overallScore;
+
+    @Column(name = "required_skills_total")
+    private Integer requiredSkillsTotal;
+
+    @Column(name = "required_skills_matched")
+    private Integer requiredSkillsMatched;
+
+    @Column(name = "preferred_skills_total")
+    private Integer preferredSkillsTotal;
+
+    @Column(name = "preferred_skills_matched")
+    private Integer preferredSkillsMatched;
+
+    @Column(name = "is_stale", nullable = false)
+    private Boolean isStale = false;
+
+    @Column(name = "algorithm_version", length = 50)
+    private String algorithmVersion = "deterministic-v1";
+
+    @Column(name = "scored_at")
+    private Instant scoredAt;
+
+    @OneToMany(
+        mappedBy = "matchResult",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    private List<MatchSkillDetail> skillDetails = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -113,6 +153,8 @@ public class MatchResult {
         if (modelVersion == null) modelVersion = "all-MiniLM-L6-v2";
         if (screeningMode == null) screeningMode = ScreeningMode.NORMAL;
         if (matchingMethod == null) matchingMethod = MatchingMethod.HYBRID;
+        if (isStale == null) isStale = false;
+        if (algorithmVersion == null) algorithmVersion = "deterministic-v1";
     }
 
     public Long getId() { return id; }
@@ -176,4 +218,38 @@ public class MatchResult {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public BigDecimal getRequiredSkillCoverage() { return requiredSkillCoverage; }
+    public void setRequiredSkillCoverage(BigDecimal requiredSkillCoverage) { this.requiredSkillCoverage = requiredSkillCoverage; }
+
+    public BigDecimal getPreferredSkillCoverage() { return preferredSkillCoverage; }
+    public void setPreferredSkillCoverage(BigDecimal preferredSkillCoverage) { this.preferredSkillCoverage = preferredSkillCoverage; }
+
+    public BigDecimal getOverallScore() { return overallScore; }
+    public void setOverallScore(BigDecimal overallScore) { this.overallScore = overallScore; }
+
+    public Integer getRequiredSkillsTotal() { return requiredSkillsTotal; }
+    public void setRequiredSkillsTotal(Integer requiredSkillsTotal) { this.requiredSkillsTotal = requiredSkillsTotal; }
+
+    public Integer getRequiredSkillsMatched() { return requiredSkillsMatched; }
+    public void setRequiredSkillsMatched(Integer requiredSkillsMatched) { this.requiredSkillsMatched = requiredSkillsMatched; }
+
+    public Integer getPreferredSkillsTotal() { return preferredSkillsTotal; }
+    public void setPreferredSkillsTotal(Integer preferredSkillsTotal) { this.preferredSkillsTotal = preferredSkillsTotal; }
+
+    public Integer getPreferredSkillsMatched() { return preferredSkillsMatched; }
+    public void setPreferredSkillsMatched(Integer preferredSkillsMatched) { this.preferredSkillsMatched = preferredSkillsMatched; }
+
+    public Boolean getIsStale() { return isStale; }
+    public Boolean isStale() { return isStale; }
+    public void setIsStale(Boolean isStale) { this.isStale = isStale; }
+
+    public String getAlgorithmVersion() { return algorithmVersion; }
+    public void setAlgorithmVersion(String algorithmVersion) { this.algorithmVersion = algorithmVersion; }
+
+    public Instant getScoredAt() { return scoredAt; }
+    public void setScoredAt(Instant scoredAt) { this.scoredAt = scoredAt; }
+
+    public List<MatchSkillDetail> getSkillDetails() { return skillDetails; }
+    public void setSkillDetails(List<MatchSkillDetail> skillDetails) { this.skillDetails = skillDetails; }
 }

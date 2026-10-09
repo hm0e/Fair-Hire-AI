@@ -18,15 +18,23 @@ public class JobService {
     private final SkillRepository skillRepository;
     private final BiasReportRepository biasReportRepository;
     private final AIServiceClient aiServiceClient;
+    private final MatchResultRepository matchResultRepository;
+    private final JobSkillRepository jobSkillRepository;
+    private final com.fairhire.repositories.MatchSkillDetailRepository matchSkillDetailRepository;
 
     public JobService(JobRepository jobRepository, UserRepository userRepository,
                       SkillRepository skillRepository, BiasReportRepository biasReportRepository,
-                      AIServiceClient aiServiceClient) {
+                      AIServiceClient aiServiceClient, MatchResultRepository matchResultRepository,
+                      JobSkillRepository jobSkillRepository,
+                      com.fairhire.repositories.MatchSkillDetailRepository matchSkillDetailRepository) {
         this.jobRepository = jobRepository;
         this.userRepository = userRepository;
         this.skillRepository = skillRepository;
         this.biasReportRepository = biasReportRepository;
         this.aiServiceClient = aiServiceClient;
+        this.matchResultRepository = matchResultRepository;
+        this.jobSkillRepository = jobSkillRepository;
+        this.matchSkillDetailRepository = matchSkillDetailRepository;
     }
 
     @Transactional
@@ -119,14 +127,109 @@ public class JobService {
 
         if (title != null) job.setTitle(title.trim());
         if (description != null) job.setDescription(description.trim());
-        if (requirements != null && !requirements.isBlank()) {
+        if (requirements != null) {
             job.getRequirements().clear();
+            if (!requirements.isBlank()) {
+                job.getRequirements().add(new JobRequirement(
+                        job, RequirementType.GENERAL, requirements.trim(), RequirementNecessity.REQUIRED, new BigDecimal("1.000")
+                ));
+            }
+        }
+
+        // Atomically invalidate existing match results for this job
+        matchResultRepository.markStaleByJobId(id);
+
+        return formatJobDto(jobRepository.save(job));
+    }
+
+    @Transactional
+    public Job updateJobTitle(Long id, String title) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Job with ID " + id + " not found."));
+        job.setTitle(title != null ? title.trim() : "");
+        matchResultRepository.markStaleByJobId(id);
+        return jobRepository.save(job);
+    }
+
+    @Transactional
+    public Job updateJobDescription(Long id, String description) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Job with ID " + id + " not found."));
+        job.setDescription(description != null ? description.trim() : "");
+        matchResultRepository.markStaleByJobId(id);
+        return jobRepository.save(job);
+    }
+
+    @Transactional
+    public Job updateJobRequirements(Long id, String requirements) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Job with ID " + id + " not found."));
+        job.getRequirements().clear();
+        if (requirements != null && !requirements.isBlank()) {
             job.getRequirements().add(new JobRequirement(
                     job, RequirementType.GENERAL, requirements.trim(), RequirementNecessity.REQUIRED, new BigDecimal("1.000")
             ));
         }
+        matchResultRepository.markStaleByJobId(id);
+        return jobRepository.save(job);
+    }
 
-        return formatJobDto(jobRepository.save(job));
+    @Transactional
+    public JobSkill updateJobSkillNecessity(Long jobId, Long jobSkillId, Boolean isMandatory) {
+        JobSkill js = jobSkillRepository.findById(jobSkillId)
+                .orElseThrow(() -> new IllegalArgumentException("JobSkill with ID " + jobSkillId + " not found."));
+        if (!js.getJob().getId().equals(jobId)) {
+            throw new IllegalArgumentException("JobSkill " + jobSkillId + " does not belong to Job " + jobId);
+        }
+        js.setIsMandatory(isMandatory != null ? isMandatory : true);
+        JobSkill saved = jobSkillRepository.save(js);
+        matchResultRepository.markStaleByJobId(jobId);
+        return saved;
+    }
+
+    @Transactional
+    public JobSkill updateJobSkillCanonicalSkill(Long jobId, Long jobSkillId, Long newSkillId) {
+        JobSkill js = jobSkillRepository.findById(jobSkillId)
+                .orElseThrow(() -> new IllegalArgumentException("JobSkill with ID " + jobSkillId + " not found."));
+        if (!js.getJob().getId().equals(jobId)) {
+            throw new IllegalArgumentException("JobSkill " + jobSkillId + " does not belong to Job " + jobId);
+        }
+        Skill newSkill = skillRepository.findById(newSkillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill with ID " + newSkillId + " not found."));
+        js.setSkill(newSkill);
+        JobSkill saved = jobSkillRepository.save(js);
+        matchResultRepository.markStaleByJobId(jobId);
+        return saved;
+    }
+
+    @Transactional
+    public JobSkill addJobSkill(Long jobId, Long skillId, Boolean isMandatory, Integer minimumYears, BigDecimal weight) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("Job with ID " + jobId + " not found."));
+        Skill skill = skillRepository.findById(skillId)
+                .orElseThrow(() -> new IllegalArgumentException("Skill with ID " + skillId + " not found."));
+        JobSkill js = new JobSkill(job, skill, isMandatory != null ? isMandatory : true, minimumYears, weight);
+        JobSkill saved = jobSkillRepository.save(js);
+        job.getJobSkills().add(saved);
+        matchResultRepository.markStaleByJobId(jobId);
+        return saved;
+    }
+
+    @Transactional
+    public void removeJobSkill(Long jobId, Long jobSkillId) {
+        JobSkill js = jobSkillRepository.findById(jobSkillId)
+                .orElseThrow(() -> new IllegalArgumentException("JobSkill with ID " + jobSkillId + " not found."));
+        if (!js.getJob().getId().equals(jobId)) {
+            throw new IllegalArgumentException("JobSkill " + jobSkillId + " does not belong to Job " + jobId);
+        }
+        matchSkillDetailRepository.deleteByJobSkillId(jobSkillId);
+        jobSkillRepository.delete(js);
+        matchResultRepository.markStaleByJobId(jobId);
+    }
+
+    @Transactional
+    public void markJobMatchesStale(Long jobId) {
+        matchResultRepository.markStaleByJobId(jobId);
     }
 
     @Transactional

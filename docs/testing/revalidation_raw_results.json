@@ -12,12 +12,12 @@
     "details": "Failures: []"
   },
   "Group 4 & 5 / B-01: Symbol Boundaries & C Handling": {
-    "pass": false,
-    "details": "Failures: [\"Expected 'C' in 'Experience as C-developer on Linux.' -> got ['Linux']\"]"
+    "pass": true,
+    "details": "Failures: []"
   },
   "Group 6 / B-02: Go Language Disambiguation": {
-    "pass": false,
-    "details": "Failures: [\"Failed to extract 'Go' from tech text: 'Proficient in GO language.' -> []\"]"
+    "pass": true,
+    "details": "Failures: []"
   },
   "Group 6 / B-03: Node.js vs Cluster Node": {
     "pass": true,
@@ -37,7 +37,7 @@
   },
   "Group 10: Determinism": {
     "pass": true,
-    "details": "100 runs, 24 skills extracted per run, 0 divergences, total time 5.40s"
+    "details": "100 runs, 24 skills extracted per run, 0 divergences, total time 4.85s"
   },
   "Group 11: Idempotency": {
     "pass": true,
@@ -45,15 +45,15 @@
   },
   "Group 12 / B-07: Concurrency Serialization": {
     "pass": true,
-    "details": "Levels 5/10/20: {5: (5, 0, 0.14206814765930176, []), 10: (10, 0, 0.2604560852050781, []), 20: (20, 0, 0.47814273834228516, [])}"
+    "details": "Levels 5/10/20: {5: (5, 0, 0.13077354431152344, []), 10: (10, 0, 0.2470688819885254, []), 20: (20, 0, 0.397676944732666, [])}"
   },
   "Group 13: Cross-Format Parity": {
     "pass": true,
     "details": "TXT: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'PostgreSQL', 'Python'], DOCX: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'PostgreSQL', 'Python'], PDF: ['AWS', 'Docker', 'Kubernetes', 'Linux', 'PostgreSQL', 'Python']"
   },
   "Group 14 & 15 / B-06: Blank Content Rejection": {
-    "pass": false,
-    "details": "Details: [\"empty.txt: expected error containing 'Upload rejected: File is empty or not provided.', got '{'error': 'File parameter is required and cannot be empty.'}'\", \"spaces.txt: expected error containing 'Upload rejected: File contains only whitespace or is empty.', got '{'error': 'Upload validation failed', 'detail': 'Upload rejected: Corrupt file (payload smaller than 4 bytes).'}'\", \"tabs.txt: expected error containing 'Upload rejected: File contains only whitespace or is empty.', got '{'error': 'Upload validation failed', 'detail': 'Upload rejected: Corrupt file (payload smaller than 4 bytes).'}'\"]"
+    "pass": true,
+    "details": "Details: []"
   },
   "Group 16 / B-05: API Contract & Security Auditing": {
     "pass": true,
@@ -72,15 +72,15 @@
     "details": "V3 Checksum: 11453495 (expected 11453495), All Success: True"
   },
   "Group 20: Security Ingestion Rejections": {
-    "pass": false,
-    "details": "Failures: [\"resume;rm -rf /;.pdf: expected 'command characters', got '{'error': 'Upload validation failed', 'detail': 'Security violation: Filename contains path traversal or illegal characters: resume;rm -rf /;.pdf'}'\"]"
+    "pass": true,
+    "details": "Failures: []"
   },
   "Group 21: Performance Profile": {
     "pass": true,
-    "details": "Profiles: {'1 KB': {'status': 201, 'latency_ms': 54.63, 'skillsCount': 7}, '10 KB': {'status': 201, 'latency_ms': 126.39, 'skillsCount': 7}, '50 KB': {'status': 201, 'latency_ms': 422.43, 'skillsCount': 7}, '100 KB': {'status': 201, 'latency_ms': 998.5, 'skillsCount': 7}, '500 KB': {'status': 201, 'latency_ms': 8276.62, 'skillsCount': 7}, '1000 KB': {'status': 201, 'latency_ms': 22305.5, 'skillsCount': 7}, '5 MB': {'status': 201, 'latency_ms': 321321.53}}"
+    "details": "Profiles: {'1 KB': {'status': 201, 'latency_ms': 59.81, 'skillsCount': 7}, '10 KB': {'status': 201, 'latency_ms': 160.49, 'skillsCount': 7}, '50 KB': {'status': 201, 'latency_ms': 440.25, 'skillsCount': 7}, '100 KB': {'status': 201, 'latency_ms': 947.32, 'skillsCount': 7}, '500 KB': {'status': 201, 'latency_ms': 3926.21, 'skillsCount': 7}, '1000 KB': {'status': 201, 'latency_ms': 7542.18, 'skillsCount': 7}, '5000 KB': {'status': 201, 'latency_ms': 37008.75, 'skillsCount': 7}}"
   },
   "Group 22: Full Regression & Cross-Service Connectivity": {
     "pass": true,
-    "details": "Backend, PostgreSQL, and AI Service UP: {'database': {'database': 'PostgreSQL', 'version': '16.13', 'status': 'UP'}, 'service': 'fairhire-backend', 'ai_service': {'details': {'status': 'UP', 'service': 'fairhire-ai-service', 'version': '1.0.0', 'timestamp': '2026-10-05T10:09:28.507579+00:00', 'runtime': {'python_version': '3.11.17', 'model_configured': 'all-MiniLM-L6-v2'}}, 'status': 'UP'}, 'timestamp': '2026-10-05T10:09:27.878776553Z', 'status': 'UP'}"
+    "details": "Backend, PostgreSQL, and AI Service UP: {'database': {'database': 'PostgreSQL', 'version': '16.13', 'status': 'UP'}, 'service': 'fairhire-backend', 'ai_service': {'details': {'status': 'UP', 'service': 'fairhire-ai-service', 'version': '1.0.0', 'timestamp': '2026-10-05T11:46:01.912829+00:00', 'runtime': {'python_version': '3.11.17', 'model_configured': 'all-MiniLM-L6-v2'}}, 'status': 'UP'}, 'timestamp': '2026-10-05T11:46:01.828422187Z', 'status': 'UP'}"
   }
 }

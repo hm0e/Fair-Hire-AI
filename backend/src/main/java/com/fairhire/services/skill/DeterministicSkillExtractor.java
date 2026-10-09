@@ -53,15 +53,6 @@ public class DeterministicSkillExtractor {
     }
 
     /**
-     * Occupied text span in the resume to prevent substring collisions.
-     */
-    private record MatchedSpan(int start, int end, Long skillId) {
-        public boolean overlaps(int otherStart, int otherEnd) {
-            return Math.max(start, otherStart) < Math.min(end, otherEnd);
-        }
-    }
-
-    /**
      * Extract canonical skills from parsed resume text using active taxonomy skills.
      *
      * @param rawText      Parsed and normalized resume text
@@ -76,7 +67,7 @@ public class DeterministicSkillExtractor {
         // 1. Build and compile extraction rules sorted by length descending (longest first)
         List<CompiledSkillRule> rules = buildCompiledRules(activeSkills);
 
-        List<MatchedSpan> occupiedSpans = new ArrayList<>();
+        BitSet occupiedBits = new BitSet(rawText.length());
         List<ExtractedSkillCandidate> rawCandidates = new ArrayList<>();
 
         // 2. Scan text using rules in priority order
@@ -88,8 +79,8 @@ public class DeterministicSkillExtractor {
                 int end = exactMatcher.end();
                 String matchedStr = rawText.substring(start, end);
 
-                if (isSpanAvailable(occupiedSpans, start, end)) {
-                    occupiedSpans.add(new MatchedSpan(start, end, rule.skill.getId()));
+                if (isSpanAvailable(occupiedBits, start, end)) {
+                    occupiedBits.set(start, end);
                     SkillExtractionMethod method = rule.isCanonical
                             ? SkillExtractionMethod.EXACT_CANONICAL_MATCH
                             : SkillExtractionMethod.EXACT_ALIAS_MATCH;
@@ -116,8 +107,8 @@ public class DeterministicSkillExtractor {
                     int end = ciMatcher.end();
                     String matchedStr = rawText.substring(start, end);
 
-                    if (isSpanAvailable(occupiedSpans, start, end)) {
-                        occupiedSpans.add(new MatchedSpan(start, end, rule.skill.getId()));
+                    if (isSpanAvailable(occupiedBits, start, end)) {
+                        occupiedBits.set(start, end);
                         SkillExtractionMethod method = rule.isCanonical
                                 ? SkillExtractionMethod.CASE_INSENSITIVE_CANONICAL_MATCH
                                 : SkillExtractionMethod.CASE_INSENSITIVE_ALIAS_MATCH;
@@ -158,13 +149,12 @@ public class DeterministicSkillExtractor {
         return result;
     }
 
-    private boolean isSpanAvailable(List<MatchedSpan> occupiedSpans, int start, int end) {
-        for (MatchedSpan span : occupiedSpans) {
-            if (span.overlaps(start, end)) {
-                return false;
-            }
+    private boolean isSpanAvailable(BitSet occupiedBits, int start, int end) {
+        if (start < 0 || end <= start) {
+            return false;
         }
-        return true;
+        int next = occupiedBits.nextSetBit(start);
+        return next == -1 || next >= end;
     }
 
     /**

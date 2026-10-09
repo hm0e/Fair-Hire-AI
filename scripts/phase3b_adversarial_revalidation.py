@@ -37,13 +37,13 @@ AI_URL = f"http://{AI_IP}:5000"
 def log(msg):
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
-def http_json(method, path, body=None, expected_status=None):
+def http_json(method, path, body=None, expected_status=None, timeout=120):
     url = f"{BASE_URL}{path}"
     data = json.dumps(body).encode("utf-8") if body is not None else None
     headers = {"Content-Type": "application/json"} if data else {}
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             status = resp.status
             content = resp.read().decode("utf-8")
             parsed = json.loads(content) if content else {}
@@ -61,7 +61,7 @@ def http_json(method, path, body=None, expected_status=None):
             raise AssertionError(f"Expected status {expected_status}, got {status}: {content}")
         return status, parsed
 
-def http_multipart(path, filename, content_bytes, mime_type, form_fields=None, expected_status=None):
+def http_multipart(path, filename, content_bytes, mime_type, form_fields=None, expected_status=None, timeout=120):
     url = f"{BASE_URL}{path}"
     boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
     data = bytearray()
@@ -86,7 +86,7 @@ def http_multipart(path, filename, content_bytes, mime_type, form_fields=None, e
     }, method="POST")
     
     try:
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             status = resp.status
             content = resp.read().decode("utf-8")
             parsed = json.loads(content) if content else {}
@@ -615,11 +615,15 @@ Experience:
             b06_pass = False
             b06_details.append(f"{fname}: expected error containing one of {expected_keywords}, got '{r}'")
             
-    # Also test valid blank PDF
+    # Also test valid blank PDF (verify it transitions to FAILED or exists in FAILED state)
     blank_pdf = create_valid_pdf_bytes("   ")
     s_bpdf, r_bpdf = http_multipart("/resumes", "blank.pdf", blank_pdf, "application/pdf", {"name": "Blank PDF", "email": f"blankpdf_{time.time()}@example.com"})
-    # Normal empty PDF extraction transitions to FAILED
-    if s_bpdf != 201 or r_bpdf.get("parsingStatus") != "FAILED":
+    if s_bpdf == 409 and "existingResumeId" in r_bpdf:
+        s_ex, r_ex = http_json("GET", f"/resumes/{r_bpdf['existingResumeId']}")
+        if r_ex.get("parsingStatus") != "FAILED":
+            b06_pass = False
+            b06_details.append(f"blank.pdf: existing resume {r_bpdf['existingResumeId']} status is {r_ex.get('parsingStatus')}, expected FAILED")
+    elif s_bpdf != 201 or r_bpdf.get("parsingStatus") != "FAILED":
         b06_pass = False
         b06_details.append(f"blank.pdf: expected 201 with FAILED status, got status {s_bpdf}, body: {r_bpdf}")
 
@@ -741,7 +745,7 @@ Experience:
     perf_results = {}
     base_paragraph = "Experienced senior developer proficient in Python, Java, Docker, Kubernetes, AWS, PostgreSQL, and Linux. Developed high-throughput microservices.\n"
     
-    for target_kb in [1, 10, 50, 100, 500, 1000]:
+    for target_kb in [1, 10, 50, 100, 500, 1000, 5000]:
         repeat_count = max(1, int((target_kb * 1024) / len(base_paragraph)))
         content = base_paragraph * repeat_count
         actual_size_bytes = len(content.encode("utf-8"))
@@ -756,17 +760,6 @@ Experience:
             "skillsCount": resp.get("skillsCount", 0) if s == 201 else 0
         }
         log(f"Perf {target_kb} KB ({actual_size_bytes} bytes): {elapsed_ms:.2f} ms, status {s}")
-    
-    # 5MB test with timeout protection
-    try:
-        content_5mb = base_paragraph * int((5 * 1024 * 1024) / len(base_paragraph))
-        t0 = time.time()
-        u_email = f"perf_5mb_{time.time()}@example.com"
-        s_5mb, resp_5mb = ingest_text(content_5mb, "Perf 5MB", u_email)
-        elapsed_5mb = (time.time() - t0) * 1000
-        perf_results["5 MB"] = {"status": s_5mb, "latency_ms": round(elapsed_5mb, 2)}
-    except Exception as ex:
-        perf_results["5 MB"] = {"status": "TIMED_OUT", "latency_ms": "> 60000"}
         
     results["Group 21: Performance Profile"] = (True, f"Profiles: {perf_results}")
 

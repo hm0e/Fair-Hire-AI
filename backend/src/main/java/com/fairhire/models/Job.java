@@ -24,6 +24,15 @@ public class Job {
     @Column(length = 100)
     private String department;
 
+    @Column(length = 150)
+    private String location;
+
+    @Column(name = "employment_type", length = 50)
+    private String employmentType;
+
+    @Column(name = "remote_policy", length = 30)
+    private String remotePolicy;
+
     @Column(name = "raw_description", nullable = false, columnDefinition = "TEXT")
     private String rawDescription;
 
@@ -97,6 +106,15 @@ public class Job {
 
     public String getDepartment() { return department; }
     public void setDepartment(String department) { this.department = department; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public String getEmploymentType() { return employmentType; }
+    public void setEmploymentType(String employmentType) { this.employmentType = employmentType; }
+
+    public String getRemotePolicy() { return remotePolicy; }
+    public void setRemotePolicy(String remotePolicy) { this.remotePolicy = remotePolicy; }
 
     public String getRawDescription() { return rawDescription; }
     public void setRawDescription(String rawDescription) { this.rawDescription = rawDescription; }

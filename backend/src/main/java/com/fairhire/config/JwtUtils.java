@@ -25,12 +25,47 @@ public class JwtUtils {
     }
 
     public String generateToken(Long userId, String email, String role) {
+        return generateToken(userId, email, role, null);
+    }
+
+    public String generateToken(Long userId, String email, String role, String department) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + (long) expirationHours * 3600 * 1000);
 
+        Map<String, Object> claims = new java.util.HashMap<>();
+        if (email != null) claims.put("email", email);
+        if (role != null) claims.put("role", role);
+        if (department != null && !department.isBlank()) {
+            claims.put("department", department.trim());
+        }
+
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claims(Map.of("email", email, "role", role))
+                .claims(claims)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateExpiredToken(Long userId, String email, String role) {
+        return generateExpiredToken(userId, email, role, null);
+    }
+
+    public String generateExpiredToken(Long userId, String email, String role, String department) {
+        Date now = new Date(System.currentTimeMillis() - 7200000);
+        Date expiryDate = new Date(System.currentTimeMillis() - 3600000);
+
+        Map<String, Object> claims = new java.util.HashMap<>();
+        if (email != null) claims.put("email", email);
+        if (role != null) claims.put("role", role);
+        if (department != null && !department.isBlank()) {
+            claims.put("department", department.trim());
+        }
+
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claims(claims)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())

@@ -2,9 +2,9 @@ package com.fairhire.services.skill;
 
 import com.fairhire.models.Resume;
 import com.fairhire.models.ResumeSkill;
+import com.fairhire.repositories.MatchResultRepository;
 import com.fairhire.repositories.ResumeSkillRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -14,14 +14,20 @@ import java.util.List;
  * Executes skill deletion and persistence in an isolated transaction
  * so any failure rolls back partial skills cleanly without affecting
  * parent lifecycle status recording.
+ *
+ * Phase 4B: Atomically invalidates deterministic match results for the resume
+ * upon successful skill replacement.
  */
 @Service
 public class SkillPersistenceService {
 
     private final ResumeSkillRepository resumeSkillRepository;
+    private final MatchResultRepository matchResultRepository;
 
-    public SkillPersistenceService(ResumeSkillRepository resumeSkillRepository) {
+    public SkillPersistenceService(ResumeSkillRepository resumeSkillRepository,
+                                   MatchResultRepository matchResultRepository) {
         this.resumeSkillRepository = resumeSkillRepository;
+        this.matchResultRepository = matchResultRepository;
     }
 
     @Transactional
@@ -41,5 +47,10 @@ public class SkillPersistenceService {
             resumeSkillRepository.save(resumeSkill);
         }
         resumeSkillRepository.flush();
+
+        // Phase 4B: Atomically invalidate existing match results for this resume
+        if (resume.getId() != null) {
+            matchResultRepository.markStaleByResumeId(resume.getId());
+        }
     }
 }

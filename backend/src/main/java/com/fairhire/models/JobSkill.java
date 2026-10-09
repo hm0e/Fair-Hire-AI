@@ -30,6 +30,15 @@ public class JobSkill {
     @Column(nullable = false, precision = 4, scale = 3)
     private BigDecimal weight = new BigDecimal("1.000");
 
+    @Column(name = "extraction_method", length = 50)
+    private String extractionMethod;
+
+    @Column(name = "context_snippet", length = 300)
+    private String contextSnippet;
+
+    @Column(name = "matched_text", length = 100)
+    private String matchedText;
+
     public JobSkill() {}
 
     public JobSkill(Job job, Skill skill) {
@@ -46,6 +55,18 @@ public class JobSkill {
         this.isMandatory = isMandatory != null ? isMandatory : true;
         this.minimumYears = minimumYears != null ? minimumYears : 0;
         this.weight = weight != null ? weight : new BigDecimal("1.000");
+    }
+
+    public JobSkill(Job job, Skill skill, Boolean isMandatory, Integer minimumYears, BigDecimal weight,
+                    String extractionMethod, String contextSnippet, String matchedText) {
+        this.job = job;
+        this.skill = skill;
+        this.isMandatory = isMandatory != null ? isMandatory : true;
+        this.minimumYears = minimumYears != null ? minimumYears : 0;
+        this.weight = weight != null ? weight : new BigDecimal("1.000");
+        this.extractionMethod = extractionMethod;
+        this.contextSnippet = contextSnippet;
+        this.matchedText = matchedText;
     }
 
     @PrePersist
@@ -72,4 +93,13 @@ public class JobSkill {
 
     public BigDecimal getWeight() { return weight; }
     public void setWeight(BigDecimal weight) { this.weight = weight; }
+
+    public String getExtractionMethod() { return extractionMethod; }
+    public void setExtractionMethod(String extractionMethod) { this.extractionMethod = extractionMethod; }
+
+    public String getContextSnippet() { return contextSnippet; }
+    public void setContextSnippet(String contextSnippet) { this.contextSnippet = contextSnippet; }
+
+    public String getMatchedText() { return matchedText; }
+    public void setMatchedText(String matchedText) { this.matchedText = matchedText; }
 }

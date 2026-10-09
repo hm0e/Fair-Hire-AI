@@ -20,6 +20,22 @@ public interface MatchResultRepository extends JpaRepository<MatchResult, Long> 
 
     List<MatchResult> findByJobIdAndResumeId(Long jobId, Long resumeId);
 
+    List<MatchResult> findByJobIdAndMatchingMethodOrderByOverallScoreDesc(Long jobId, MatchingMethod matchingMethod);
+
+    List<MatchResult> findByJobIdAndMatchingMethod(Long jobId, MatchingMethod matchingMethod);
+
+    Optional<MatchResult> findByJobIdAndResumeIdAndMatchingMethod(Long jobId, Long resumeId, MatchingMethod matchingMethod);
+
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.data.jpa.repository.Query("UPDATE MatchResult m SET m.isStale = true WHERE m.job.id = :jobId")
+    void markStaleByJobId(@org.springframework.data.repository.query.Param("jobId") Long jobId);
+
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.data.jpa.repository.Query("UPDATE MatchResult m SET m.isStale = true WHERE m.resume.id = :resumeId")
+    void markStaleByResumeId(@org.springframework.data.repository.query.Param("resumeId") Long resumeId);
+
     // Compatibility method
     default List<MatchResult> findByJobIdOrderByNormalRankAsc(Long jobId) {
         return findByJobIdOrderByRankInPoolAsc(jobId);
